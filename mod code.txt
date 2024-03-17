@@ -1,116 +1,98 @@
 from tkinter import *
 from tkinter import messagebox
 import base64
+import matplotlib.pyplot as plt
+from collections import Counter
 
+def encrypt():
+    message = text1.get(1.0, END).strip()
+    shift = shift_entry.get()
+
+    if shift != "1234":
+        messagebox.showerror("Invalid Shift Key", "Invalid shift key value entered.")
+        return
+
+    language = language_choice.get()
+    alphabet = alphabets.get(language, alphabets['english'])
+
+    encrypted_message = ''
+    for char in message:
+        if char.lower() in alphabet:
+            if char.isupper():
+                encrypted_message += alphabet[(alphabet.index(char.lower()) + int(shift)) % len(alphabet)].upper()
+            else:
+                encrypted_message += alphabet[(alphabet.index(char.lower()) + int(shift)) % len(alphabet)]
+        else:
+            encrypted_message += char
+
+    display_message("Encrypted Message", encrypted_message)
+
+def decrypt():
+    message = text1.get(1.0, END).strip()
+    shift = shift_entry.get()
+
+    if shift != "1234":
+        messagebox.showerror("Invalid Secret Key", "Invalid secret key value entered.")
+        return
+
+    language = language_choice.get()
+    alphabet = alphabets.get(language, alphabets['english'])
+
+    decrypted_message = ''
+    for char in message:
+        if char.lower() in alphabet:
+            if char.isupper():
+                decrypted_message += alphabet[(alphabet.index(char.lower()) - int(shift)) % len(alphabet)].upper()
+            else:
+                decrypted_message += alphabet[(alphabet.index(char.lower()) - int(shift)) % len(alphabet)]
+        else:
+            decrypted_message += char
+
+    display_message("Decrypted Message", decrypted_message)
+
+def display_message(title, message):
+    new_window = Toplevel(screen)
+    new_window.title(title)
+
+    text_widget = Text(new_window, wrap=WORD, height=5, width=50)
+    text_widget.pack(padx=20, pady=20)
+    text_widget.insert(END, message)
+
+    # Enable copying of the message
+    text_widget.config(state=DISABLED)  # Make the text widget read-only
+    text_widget.bind("<1>", lambda event: text_widget.focus_set())  # Make the text widget selectable
+    text_widget.bind("<Control-a>", lambda event: text_widget.tag_add(SEL, "1.0", END))  # Select all text
+    text_widget.bind("<Control-c>", lambda event: new_window.clipboard_append(text_widget.selection_get()))  # Copy selected text
+
+# Create GUI
 screen = Tk()
-screen.geometry("420x420")
-screen.title("Message Encryption/Decryption")
+screen.geometry("600x400")
+screen.title("Caesar Cipher with Multi-Language Support")
 screen.configure(bg="black")
 
 # Define alphabets for different languages
 alphabets = {
     'english': 'abcdefghijklmnopqrstuvwxyz',
-    'tamil': 'அஆஇஈஉஊஎஏஐஒஓஔகஙசஜஞடணதநபமயரலவழளறனஸஷஹ௦௧௨௩௪௫௬௭௮௯௰௱௲',
+    'tamil': 'அஆஇஈஉஊ஋எஏஐஒஓஔகஙசஜஞடணதநபமயரலவழளறனஸஷஹ௦௧௨௩௪௫௬௭௮௯௰௱௲',
     'kannada': 'ಅಆಇಈಉಊಋಎಏಐಒಓಔಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಱಲಳವಶಷಸಹಽೠೡೢೣ೤೥',
     'hindi': 'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहऽॐ।॥',
-    # Add more languages as needed
+    'telugu': 'అఆఇఈఉఊఋౠఌఎఏఐఒఓఔకఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరఱలళవశషసహ',
 }
 
-# Define character mappings for different languages
-char_maps = {}
-for lang, alphabet in alphabets.items():
-    char_maps[lang] = {c: i for i, c in enumerate(alphabet)}
+Label(screen, text="Enter the Message:", bg="black", fg="white").pack()
+text1 = Text(screen, height=5, width=50)
+text1.pack()
 
-def encrypt():
-    password = code.get()
-    if password == "1234":
-        screen1=Toplevel(screen)
-        screen1.title("Encryption")
-        screen1.geometry("400x250")
-        screen1.configure(bg="black")
-
-        message = text1.get(1.0, END)
-        language = language_choice.get()  # Get selected language
-        alphabet = alphabets.get(language, alphabets['english'])  # Default to English if language not found
-        char_map = char_maps[language]  # Get character mapping for selected language
-
-        encoded_message = message.encode("utf-8")
-        encrypted_message = ''
-        for char in encoded_message:
-            if chr(char).lower() in alphabet:
-                idx = (char_map[chr(char).lower()] + 3) % len(alphabet)  # Caesar cipher with shift of 3
-                encrypted_message += alphabet[idx]
-            else:
-                encrypted_message += chr(char)
-
-        Label(screen1, text="Code is Encrypted", font="impack 10 bold").place(x=5, y=6)
-        text2 = Text(screen1, font="30", bd=4, wrap=WORD)
-        text2.place(x=2, y=30, width=390, height=180)
-        text2.insert(END, encrypted_message)
-
-    elif(password == ""):
-        messagebox.showerror("Error", "please enter the secret key")
-    elif(password != "1234"):
-        messagebox.showerror("Oops", "invalid secret key")
-
-def decrypt():
-    password = code.get()
-    if password == "1234":
-        screen2 = Toplevel(screen)
-        screen2.title("Decryption")
-        screen2.geometry("400x250")
-        screen2.configure(bg="black")
-
-        message = text1.get(1.0, END)
-        language = language_choice.get()  # Get selected language
-        alphabet = alphabets.get(language, alphabets['english'])  # Default to English if language not found
-        char_map = char_maps[language]  # Get character mapping for selected language
-
-        encoded_message = message.encode("utf-8")
-        decrypted_message = ''
-        for char in encoded_message:
-            if chr(char).lower() in alphabet:
-                idx = (char_map[chr(char).lower()] - 3) % len(alphabet)  # Caesar cipher with shift of -3 for decryption
-                decrypted_message += alphabet[idx]
-            else:
-                decrypted_message += chr(char)
-
-        Label(screen2, text="Code is Decrypted", font="impack 10 bold").place(x=5, y=6)
-        text2 = Text(screen2, font="30", bd=4, wrap=WORD)
-        text2.place(x=2, y=30, width=390, height=180)
-        text2.insert(END, decrypted_message)
-
-    elif(password == ""):
-        messagebox.showerror("Error", "please enter the secret key")
-    elif(password != "1234"):
-        messagebox.showerror("Oops", "invalid secret key")
-
-def reset():
-    text1.delete(1.0, END)
-    code.set("")
-
-# Label
-Label(screen, text="Enter the Message", font="impack 14 bold", bg="yellow").place(x=5, y=6)
-
-# Text
-text1 = Text(screen, font="20")
-text1.place(x=5, y=45, width="410", height="120")
-
-# Label1
-Label(screen, text="Enter secret key", font="impack 13 bold").place(x=138, y=185)
-
-# Entry
-code = StringVar()
-Entry(textvariable=code, bd=4, font="20", show="*").place(x=110, y=220)
-
-# Language selection
+Label(screen, text="Select Language:", bg="black", fg="white").pack()
 language_choice = StringVar(screen)
 language_choice.set('english')  # Default language
-OptionMenu(screen, language_choice, *alphabets.keys()).place(x=180, y=260)
+OptionMenu(screen, language_choice, *alphabets.keys()).pack()
 
-# Button
-Button(screen, text="Encrypt", font="ariel 15 bold", bg="red", fg="white", command=encrypt).place(x=15, y=300, width="180")
-Button(screen, text="Decrypt", font="ariel 15 bold", bg="green", fg="white", command=decrypt).place(x=220, y=300, width="180")
-Button(screen, text="Reset", font="ariel 15 bold", bg="blue", fg="white", command=reset).place(x=60, y=350, width="280")
+Label(screen, text="Enter the Secret Key:", bg="black", fg="white").pack()
+shift_entry = Entry(screen, show="*", bg="white", fg="black")
+shift_entry.pack()
 
-mainloop()
+Button(screen, text="Encrypt", command=encrypt, bg="green", fg="white", font=("Helvetica", 14)).pack(pady=10)
+Button(screen, text="Decrypt", command=decrypt, bg="red", fg="white", font=("Helvetica", 14)).pack(pady=10)
+
+screen.mainloop()
